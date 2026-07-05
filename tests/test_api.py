@@ -4,6 +4,7 @@ import uuid
 
 from dailytodo_server import api
 from dailytodo_server.db import Base, create_session_factory
+from dailytodo_server.main import create_app
 from dailytodo_server.models import User
 from dailytodo_server.security import decode_access_token
 from dailytodo_server.services import create_user
@@ -198,3 +199,18 @@ def test_template_item_sync(tmp_path):
         assert pulled.template_items[0].sort_order == 1
         assert pulled.template_items[0].deleted is False
         assert pulled.template_items[0].version == version
+
+
+def test_api_root_prefix_routes(tmp_path):
+    settings = Settings(
+        database_url=f"sqlite:///{tmp_path / 'prefixed.db'}",
+        secret_key="test-secret-key-12345",
+        api_root="apiroot/",
+    )
+    app = create_app(settings=settings)
+    paths = set(app.openapi()["paths"])
+
+    assert "/apiroot/healthz" in paths
+    assert "/apiroot/v1/auth/login" in paths
+    assert "/apiroot/v1/sync/pull" in paths
+    assert "/healthz" not in paths

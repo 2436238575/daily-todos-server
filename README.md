@@ -44,6 +44,7 @@ cp .env.example .env
 ```bash
 DAILYTODO_DATABASE_URL=postgresql://daily-todos:change-me@127.0.0.1:5435/daily-todos
 DAILYTODO_SECRET_KEY=replace-with-a-long-random-secret
+DAILYTODO_API_ROOT=
 DAILYTODO_BIND_HOST=127.0.0.1
 DAILYTODO_BIND_PORT=8080
 ```
@@ -77,6 +78,7 @@ curl http://127.0.0.1:8080/healthz
 | 变量 | 说明 | 默认值 |
 | --- | --- | --- |
 | `DAILYTODO_DATABASE_URL` | 数据库连接 URL；支持 `postgresql://...` 和 `postgresql+psycopg://...` | `postgresql+psycopg://dailytodo:change-me@127.0.0.1:5432/dailytodo` |
+| `DAILYTODO_API_ROOT` | API 挂载路径前缀。留空时接口从根路径开始；设置为 `/apiroot` 后健康检查为 `/apiroot/healthz` | 空 |
 | `DAILYTODO_SECRET_KEY` | Access token 签名密钥；生产环境必须替换为长随机值 | `dev-insecure-secret-change-me` |
 | `DAILYTODO_BIND_HOST` | uvicorn 监听地址 | `127.0.0.1` |
 | `DAILYTODO_BIND_PORT` | uvicorn 监听端口 | `8080` |
@@ -137,6 +139,8 @@ uv run dailytodo-user enable alice
 生产环境建议省略 `--password`，让命令行安全提示输入密码，避免密码进入 shell history。执行 `reset-db --yes` 前务必确认 `DAILYTODO_DATABASE_URL` 指向的是开发或测试库。
 
 ## API 概览
+
+默认 `DAILYTODO_API_ROOT` 为空，接口路径如下。如果设置 `DAILYTODO_API_ROOT=/apiroot`，则所有路径都会加上该前缀，例如 `/apiroot/healthz`、`/apiroot/v1/auth/login`。
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |

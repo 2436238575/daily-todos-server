@@ -1,6 +1,6 @@
 """ASGI application entry point."""
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 
 from .api import router
 from .db import create_session_factory, ensure_database_schema
@@ -19,11 +19,14 @@ def create_app(settings: Settings | None = None, create_tables: bool = False) ->
         settings.auth_rate_limit_window_seconds,
     )
 
-    @app.get("/healthz")
+    root_router = APIRouter()
+
+    @root_router.get("/healthz")
     def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
-    app.include_router(router)
+    root_router.include_router(router)
+    app.include_router(root_router, prefix=settings.api_root)
 
     if create_tables:
         ensure_database_schema(session_factory.kw["bind"])
