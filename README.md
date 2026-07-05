@@ -103,6 +103,15 @@ uv run dailytodo-user reset-db --yes
 
 ## 管理员 CLI
 
+`dailytodo-user` 是服务端的管理员运维入口，不是给普通客户端调用的工具。它直接连接 `DAILYTODO_DATABASE_URL` 指向的数据库，用于初始化表结构、维护用户账号，以及在开发/测试环境重建数据库。
+
+所有 CLI 命令都会读取当前环境变量或 `.env` 文件中的配置，尤其是：
+
+- `DAILYTODO_DATABASE_URL`：决定命令操作哪一个数据库。
+- `DAILYTODO_SECRET_KEY`：账号命令本身不直接使用它签发 token，但通常和服务运行环境一起配置。
+
+常用命令：
+
 ```bash
 uv run dailytodo-user init-db
 uv run dailytodo-user reset-db --yes
@@ -114,7 +123,18 @@ uv run dailytodo-user disable alice
 uv run dailytodo-user enable alice
 ```
 
-生产环境建议省略 `--password`，让命令行安全提示输入密码，避免密码进入 shell history。
+| 命令 | 作用 | 适用场景 |
+| --- | --- | --- |
+| `init-db` | 创建缺失的数据表，并对早期开发库做少量兼容性 schema 补齐。不会删除已有数据。 | 首次部署、开发环境初始化、旧测试库补齐表结构 |
+| `reset-db --yes` | 删除并重建所有 DailyTodo Server 表，已有用户、任务、模板项、令牌、冲突记录都会被清空。 | 仅限开发或测试数据库 |
+| `create <username>` | 创建一个可登录账号。密码通过交互式提示输入并确认。 | 给桌面端或移动端用户开通账号 |
+| `create <username> --password <password>` | 创建账号并直接从参数读取密码。 | 自动化脚本或临时 smoke 测试 |
+| `list` | 列出未禁用用户。 | 查看当前可登录账号 |
+| `list --include-disabled` | 列出所有用户，并在已禁用用户后标记 `disabled`。 | 审计账号状态 |
+| `disable <username>` | 禁用用户。禁用后该用户不能登录，已有 access token 在后续鉴权时也会被拒绝。 | 停用账号 |
+| `enable <username>` | 重新启用已禁用用户。 | 恢复账号 |
+
+生产环境建议省略 `--password`，让命令行安全提示输入密码，避免密码进入 shell history。执行 `reset-db --yes` 前务必确认 `DAILYTODO_DATABASE_URL` 指向的是开发或测试库。
 
 ## API 概览
 
